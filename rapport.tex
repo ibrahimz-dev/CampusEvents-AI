@@ -1,0 +1,386 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{caption}
+
+\geometry{margin=2.5cm}
+
+\onehalfspacing
+
+\definecolor{primarycolor}{RGB}{26,26,26}
+\definecolor{accentcolor}{RGB}{0,102,204}
+
+\titleformat{\section}{\Large\bfseries\color{primarycolor}}{}{0em}{\rule[0.2ex]{\linewidth}{0.5pt}\\\vspace{0.5em}}[\vspace{-0.5em}]
+\titleformat{\subsection}{\large\bfseries\color{primarycolor}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{primarycolor}}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{CampusEvents AI}}
+\fancyhead[R]{\small\textit{Rapport de Projet}}
+\fancyfoot[C]{\thepage}
+
+\renewcommand{\headrulewidth}{0.5pt}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    tabsize=2,
+    captionpos=b,
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries\color{primarycolor} CampusEvents AI}\\[0.5cm]
+    {\Large Application Mobile de Gestion d'Événements Universitaires}\\[2cm]
+    
+    \vspace{1cm}
+    
+    \begin{minipage}{0.6\textwidth}
+        \begin{tabular}{ll}
+            \textbf{Présenté par :} & Ibrahim ZARYOUH \\[0.3cm]
+            \textbf{Encadré par :}  & Mohamed ZILI \\[0.3cm]
+            \textbf{Date :}         & \today \\
+        \end{tabular}
+    \end{minipage}
+    
+    \vspace{2cm}
+    
+    \rule{0.6\textwidth}{0.5pt}\\[1cm]
+    
+    \large Département --- Université
+    
+    \vfill
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+CampusEvents AI est une application mobile développée avec React Native et Expo, destinée à la gestion d'événements universitaires. Elle permet aux étudiants de découvrir, rechercher, favoriser et s'inscrire à des événements, tout en offrant aux administrateurs la possibilité de créer, modifier et supprimer des événements. L'application intègre également un assistant IA capable de répondre aux questions, recommander des événements et planifier des emplois du temps.
+
+\subsection{Objectifs}
+
+\begin{itemize}
+    \item Centraliser la gestion des événements universitaires.
+    \item Offrir une expérience utilisateur fluide et moderne.
+    \item Intégrer l'intelligence artificielle pour assister les étudiants.
+    \item Fonctionner hors ligne avec synchronisation locale.
+\end{itemize}
+
+\section{Architecture Technique}
+
+\subsection{Technologies Utilisées}
+
+Le tableau suivant résume les technologies employées dans le projet :
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|X|}
+        \hline
+        \textbf{Technologie} & \textbf{Description} \\
+        \hline
+        React Native + Expo SDK 54 & Framework mobile cross-platform \\
+        TypeScript & Langage de programmation typé \\
+        Expo Router & Routage fichier (file-based routing) \\
+        SQLite (expo-sqlite) & Base de données locale \\
+        SecureStore & Stockage sécurisé des sessions \\
+        Groq / OpenAI / Mistral & API pour l'assistant IA \\
+        \hline
+    \end{tabularx}
+    \caption{Technologies du projet}
+\end{table}
+
+\subsection{Architecture de l'Application}
+
+L'application suit une architecture modulaire avec séparation des responsabilités :
+
+\begin{itemize}
+    \item \textbf{app/} : Pages et écrans (file-based routing avec Expo Router).
+    \item \textbf{components/} : Composants UI réutilisables (Button, Card, TextField, etc.).
+    \item \textbf{contexts/} : Contextes React (authentification).
+    \item \textbf{database/} : Couche d'accès aux données SQLite.
+    \item \textbf{services/} : Intégration des API externes (IA).
+    \item \textbf{constants/} : Thème et tokens de design.
+\end{itemize}
+
+\subsection{Base de Données}
+
+La base de données locale SQLite contient les tables suivantes :
+
+\begin{itemize}
+    \item \textbf{events} : id, title, description, category, startDateTime, endDateTime, locationName, locationAddress, organizerName, capacity, registeredCount, imageUrl, tags, createdAt.
+    \item \textbf{registrations} : id, eventId, userId, createdAt, status (clé étrangère vers events).
+    \item \textbf{favorites} : eventId, userId, createdAt (clé primaire composite).
+    \item \textbf{llm\_results} : Cache des résultats de l'assistant IA.
+\end{itemize}
+
+\subsection{Authentification}
+
+L'authentification est gérée localement via \texttt{expo-secure-store}. Deux comptes préconfigurés sont disponibles :
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Email} & \textbf{Mot de passe} & \textbf{Rôle} \\
+        \hline
+        admin@campus.ma & admin123 & Administrateur \\
+        etudiant@campus.ma & etudiant123 & Étudiant \\
+        \hline
+    \end{tabularx}
+    \caption{Comptes préconfigurés}
+\end{table}
+
+\newpage
+
+\section{Fonctionnalités}
+
+\subsection{Écran de Connexion}
+
+L'écran de connexion permet à l'utilisateur de choisir son rôle (Admin ou Étudiant) et de se connecter avec les identifiants préconfigurés.
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Écran de Connexion}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Catalogue d'Événements}
+
+Le catalogue affiche la liste des événements avec :
+\begin{itemize}
+    \item Recherche par texte.
+    \item Filtres par catégorie (Workshop, Talk, Club, Exam, Other, Passés).
+    \item Rafraîchissement par glissement (pull-to-refresh).
+    \item Ajout/retrait des favoris.
+\end{itemize}
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Catalogue d'Événements}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Détail d'un Événement}
+
+Chaque événement affiche ses informations détaillées : description, date, lieu, organisateur, capacité, et permet de s'inscrire ou d'ajouter aux favoris.
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Détail d'Événement}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Favoris}
+
+Les événements marqués comme favoris sont accessibles depuis l'onglet dédié.
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Favoris}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Inscriptions}
+
+L'utilisateur peut consulter la liste des événements auxquels il est inscrit.
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Inscriptions}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Assistant IA}
+
+L'assistant IA permet de :
+\begin{itemize}
+    \item Rechercher des événements en langage naturel.
+    \item Obtenir des recommandations personnalisées.
+    \item Planifier un emploi du temps.
+    \item Poser des questions sur le catalogue.
+\end{itemize}
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,300)[c]{\textbf{Capture d'écran --- Assistant IA}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Profil Utilisateur}
+
+L'écran de profil affiche les informations de l'utilisateur et permet de :
+\begin{itemize}
+    \item Modifier son nom d'affichage (édition en ligne).
+    \item Visualiser son email et son rôle.
+    \item Se déconnecter.
+\end{itemize}
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Profil Utilisateur}}
+\end{center}
+\vspace{0.3cm}
+
+\subsection{Administration}
+
+Les administrateurs peuvent :
+\begin{itemize}
+    \item Consulter la liste de tous les événements.
+    \item Créer de nouveaux événements avec formulaire complet.
+    \item Modifier les événements existants.
+    \item Supprimer des événements.
+\end{itemize}
+
+\vspace{0.5cm}
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Administration (Liste)}}
+\end{center}
+\vspace{0.3cm}
+
+\begin{center}
+    \framebox(350,200)[c]{\textbf{Capture d'écran --- Administration (Création)}}
+\end{center}
+\vspace{0.3cm}
+
+\section{Assistant IA}
+
+L'assistant IA est le composant central de l'application. Il utilise les API de Groq, OpenAI ou Mistral pour :
+
+\begin{itemize}
+    \item \textbf{Recherche intelligente} : Interpréter le langage naturel et filtrer les événements.
+    \item \textbf{Recommandations} : Suggérer des événements basés sur les préférences de l'utilisateur.
+    \item \textbf{Planification} : Organiser un emploi du temps d'événements.
+    \item \textbf{Questions/Réponses} : Répondre aux questions sur le catalogue.
+\end{itemize}
+
+\subsection{Configuration}
+
+L'API key et le modèle sont configurables via les variables d'environnement :
+
+\begin{lstlisting}
+EXPO_PUBLIC_LLM_API_KEY=your_api_key_here
+EXPO_PUBLIC_LLM_PROVIDER=groq
+EXPO_PUBLIC_LLM_MODEL=llama-3.3-70b-versatile
+\end{lstlisting}
+
+\section{Interface Utilisateur}
+
+\subsection{Composants Réutilisables}
+
+L'application dispose d'une bibliothèque de composants UI réutilisables :
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|X|}
+        \hline
+        \textbf{Composant} & \textbf{Rôle} \\
+        \hline
+        Button & Bouton avec variantes (primary, danger) et tailles \\
+        TextField & Champ de texte avec label et état d'erreur \\
+        Card & Carte d'événement pour les listes \\
+        SearchBar & Barre de recherche avec icône \\
+        Chip & Pastille de catégorie \\
+        Badge & Badge de statut ou compteur \\
+        Header & En-tête d'écran \\
+        EmptyState & État vide avec icône et message \\
+        \hline
+    \end{tabularx}
+    \caption{Composants UI}
+\end{table}
+
+\subsection{Thème et Design}
+
+Le design suit une charte graphique minimaliste avec :
+
+\begin{itemize}
+    \item Couleurs neutres (blanc, gris, noir).
+    \item Typographie : system font, poids variés (regular, medium, semibold, bold).
+    \item Ombres douces et coins arrondis.
+    \item Espacement cohérent (système de \texttt{Spacing} avec valeurs de 4 à 48px).
+\end{itemize}
+
+\section{Structure du Projet}
+
+\begin{lstlisting}
+CampusEvents/
+  app/                      # Pages Expo Router
+    _layout.tsx             # Layout racine
+    index.tsx               # Connexion
+    (admin)/                # Groupe admin
+      events.tsx, create.tsx, edit.tsx
+    (student)/              # Groupe etudiant
+      catalog.tsx, favorites.tsx, assistant.tsx,
+      registrations.tsx, profile.tsx, event-detail.tsx
+  components/ui/            # Composants reutilisables
+  constants/theme.ts        # Tokens de design
+  contexts/AuthContext.tsx  # Authentification
+  database/                 # CRUD SQLite
+  services/llm.ts           # Integration IA
+  utils/uuid.ts             # Generateur UUID
+\end{lstlisting}
+
+\section{Lancement et Exécution}
+
+\subsection{Prérequis}
+
+\begin{itemize}
+    \item Node.js >= 18
+    \item Expo CLI
+    \item Émulateur iOS/Android ou Expo Go
+\end{itemize}
+
+\subsection{Installation}
+
+\begin{lstlisting}
+git clone <url-du-repo>
+cd CampusEvents
+npm install
+npm start
+\end{lstlisting}
+
+\section{Conclusion}
+
+CampusEvents AI est une application complète de gestion d'événements universitaires, combinant une interface utilisateur moderne avec les capacités de l'intelligence artificielle. Son architecture locale (SQLite) la rend fonctionnelle sans connexion internet pour les fonctionnalités de base, tandis que l'assistant IA enrichit l'expérience utilisateur grâce au traitement du langage naturel.
+
+\subsection{Perspectives d'Amélioration}
+
+\begin{itemize}
+    \item Synchronisation avec un backend distant.
+    \item Notifications push pour les rappels d'événements.
+    \item Support multilingue.
+    \item Personnalisation avancée du profil.
+    \item Mode hors ligne pour l'assistant IA (modèles embarqués).
+\end{itemize}
+
+\newpage
+\begin{center}
+    \vspace*{4cm}
+    \rule{0.4\textwidth}{0.5pt}\\[1cm]
+    {\large Merci de votre attention.}\\[0.3cm]
+    {\small \textit{Rapport généré le \today}}
+\end{center}
+
+\end{document}
